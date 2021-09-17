@@ -1,0 +1,44 @@
+version: '3.3'
+
+services:
+  db:
+    image: postgres:13-alpine
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/13/data/
+    environment:
+      POSTGRES_USER: vlad
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: event
+    container_name: flaskid
+    hostname: flaskid
+    ports:
+      - 5430:5432
+    networks:
+      - flask-net
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python run.py run -h 0.0.0.0
+    volumes:
+      - .:/usr/src/app
+    container_name: flaskt
+    hostname: flaskt
+    depends_on:
+      - db
+    env_file:
+      - ./.env
+    ports:
+      - 5000:5000
+    restart: always
+    networks:
+      - flask-net
+
+volumes:
+  postgres_data:
+
+networks:
+  flask-net:
+    driver: bridge
