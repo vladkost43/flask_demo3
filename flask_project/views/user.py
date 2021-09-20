@@ -1,12 +1,8 @@
-import uuid
-from datetime import datetime
 
-from django.conf.global_settings import SECRET_KEY
-from flask import Flask, request, jsonify, make_response, Response
+from flask import  request, jsonify, Response
 from flask_login import current_user, login_required
 
-from flask_project import db,app
-import jwt
+
 from flask_project.models import User, Group
 from flask_restful import Resource
 from functools import wraps

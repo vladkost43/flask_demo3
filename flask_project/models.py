@@ -1,6 +1,7 @@
+import os
 from datetime import datetime
 
-
+import requests
 from sqlalchemy import exc, case
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -21,6 +22,8 @@ class EventArtifactModel(db.Model):
                             primary_key=True)
     event = db.relationship("Events", back_populates="artifacts")
     artifact = db.relationship("Artifact", back_populates="events")
+    event_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('artifacts.id'), nullable=False, primary_key=True)
 
     @classmethod
     def find_all(cls):
@@ -66,6 +69,10 @@ class Events(UserMixin, db.Model):
                               cascade='all, delete')
     artifacts = db.relationship("EventArtifactModel", back_populates='event', cascade='all, delete')
     creator = db.Column(db.String(50), unique=False)
+    authors = db.relationship('Authors',
+                               secondary="event_authors",
+                               cascade='all, delete'
+                               )
 
     def add_guest(self, user):
         if user in self.event_id:
@@ -134,6 +141,14 @@ class Events(UserMixin, db.Model):
             raise exc.IntegrityError("User can not be guest and participant", params=None, orig=None)
         self.user_id.append(user)
         self.save_to_db()
+
+    @classmethod
+    def filter_by_participant(cls, user_id, queryset=None) :
+        queryset = queryset or cls.query
+        return queryset.join(EventAuthorsModel). \
+            filter(EventAuthorsModel.authors_id == int(user_id))
+
+
 
 
 class User(UserMixin, db.Model):
@@ -206,6 +221,10 @@ class User(UserMixin, db.Model):
         db.session.delete(self)
         db.session.commit()
 
+    @classmethod
+    def exists_remote(cls, books_id):
+        return bool(requests.get('{}/api/books/{}'.format('http://localhost:8000', books_id)))
+
 
 class Group(db.Model):
 
@@ -256,3 +275,40 @@ class Artifact(db.Model, BaseModel):
     @classmethod
     def find_by_url(cls, url):
         return cls.query.filter_by(url=url).first()
+
+class Authors(db.Model, BaseModel):
+    __tablename__ = 'authors'
+
+    id = db.Column(db.Integer, primary_key=True)
+    url = db.Column(db.String(128), nullable=False, unique=True)
+    events = db.relationship('Events',
+                              secondary="event_authors",
+                              cascade='all, delete')
+
+    def __str__(self):
+        return self.url
+
+    @classmethod
+    def find_by_url(cls, url):
+        return cls.query.filter_by(url=url).first()
+
+
+class EventAuthorsModel(db.Model):
+
+    __tablename__ = 'event_authors'
+
+    event_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False, primary_key=True)
+    authors_id = db.Column(db.Integer, db.ForeignKey('authors.id'), nullable=False, primary_key=True)
+
+    @classmethod
+    def find_all(cls):
+        return cls.query.all()
+
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def delete_from_db(self):
+        db.session.delete(self)
+        db.session.commit()
+
