@@ -33,7 +33,7 @@ class EventSchema(ModelSchema):
         include_fk = True
         model = Events
         fields = ("id", "event_name", "event_date", "status", "user_id", "artifacts", "authors", 'creator')
-        dump_only = ("id", "event_name", "event_date", 'artifacts',"authors", "status")
+        dump_only = ("id", "event_name", "event_date", 'artifacts', "authors", "status")
 
     @post_load
     def make_event(self, data, **kwargs):
@@ -43,5 +43,5 @@ class EventSchema(ModelSchema):
 event_full_schema = EventSchema()
 event_full_list_schema = EventSchema(many=True)
 
-event_short_schema = EventSchema(exclude=( 'artifacts', 'authors', 'creator'))
+event_short_schema = EventSchema(exclude=('artifacts', 'authors', 'creator'))
 event_short_list_schema = EventSchema(exclude=('artifacts', 'authors', 'creator'), many=True)

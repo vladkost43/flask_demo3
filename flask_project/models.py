@@ -1,6 +1,4 @@
-import os
 from datetime import datetime
-
 import requests
 from sqlalchemy import exc, case
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -60,16 +58,16 @@ class Events(UserMixin, db.Model):
                               secondary="party",
                               cascade='all, delete')
     artifacts = db.relationship('Artifact',
-                               secondary="event_artifact",
-                               cascade='all, delete')
+                                secondary="event_artifact",
+                                cascade='all, delete')
     creator = db.Column(db.String(50), unique=False)
     authors = db.relationship('Authors',
-                               secondary="event_authors",
-                               cascade='all, delete'
-                               )
+                              secondary="event_authors",
+                              cascade='all, delete'
+                              )
 
     @classmethod
-    def filter_by_artifacts(cls, art_id, queryset= None):
+    def filter_by_artifacts(cls, art_id, queryset=None):
         queryset = queryset or cls.query
         return queryset.join(EventArtifactModel). \
             filter(EventArtifactModel.artifact_id == int(art_id))
@@ -143,12 +141,10 @@ class Events(UserMixin, db.Model):
         self.save_to_db()
 
     @classmethod
-    def filter_by_participant(cls, user_id, queryset=None) :
+    def filter_by_participant(cls, user_id, queryset=None):
         queryset = queryset or cls.query
         return queryset.join(EventAuthorsModel). \
             filter(EventAuthorsModel.authors_id == int(user_id))
-
-
 
 
 class User(UserMixin, db.Model):
@@ -278,14 +274,15 @@ class Artifact(db.Model, BaseModel):
     def find_by_url(cls, url):
         return cls.query.filter_by(url=url).first()
 
+
 class Authors(db.Model, BaseModel):
     __tablename__ = 'authors'
 
     id = db.Column(db.Integer, primary_key=True)
     url = db.Column(db.String(128), nullable=False, unique=True)
     events = db.relationship('Events',
-                              secondary="event_authors",
-                              cascade='all, delete')
+                             secondary="event_authors",
+                             cascade='all, delete')
 
     def __str__(self):
         return self.url
@@ -313,4 +310,3 @@ class EventAuthorsModel(db.Model):
     def delete_from_db(self):
         db.session.delete(self)
         db.session.commit()
-

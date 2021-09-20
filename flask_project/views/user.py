@@ -1,5 +1,5 @@
 
-from flask import  request, jsonify, Response
+from flask import request, jsonify, Response
 from flask_login import current_user, login_required
 
 
@@ -42,7 +42,7 @@ class UserResource(Resource):
 
 
 class SignupApi(Resource):
-    classmethod
+    @classmethod
     def get(self):
         if current_user.is_authenticated and current_user.group_id == 3:
 
@@ -58,7 +58,6 @@ class SignupApi(Resource):
 
             return jsonify({'users': output})
         return jsonify({'message': 'You dont admin'})
-
 
     @classmethod
     @admin_required
@@ -79,10 +78,11 @@ class SignupApi(Resource):
                         group_id=user_json.get('group_id')
                         )
             user.password = password
-            if user.group_id < 1 and user.group_id > 2:
+            if (user.group_id) < 1 and user.group_id > 2:
                 return {"status": 401, "message": "Invalid group id"}
             user.save_to_db()
             return user_full_schema.dump(user), 200
+
 
 class UserApi(Resource):
     @classmethod
@@ -121,8 +121,6 @@ class UserApi(Resource):
             user_json = request.get_json(force=True)
             username = user_json['username']
 
-
-
             if not user_data:
                 return {"status": 404, 'message': "User not found"}
 
@@ -142,10 +140,3 @@ class UserApi(Resource):
             return user_full_schema.dump(user_data), 200
 
         return {"status": 401, "reason": "User is not admin"}
-
-
-
-
-
-
-

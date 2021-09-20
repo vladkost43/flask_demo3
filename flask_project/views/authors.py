@@ -1,6 +1,3 @@
-import os
-from typing import Dict, Tuple
-
 import requests
 from flask import request, Response, jsonify
 from flask_login import login_required, current_user
@@ -22,6 +19,7 @@ class EventArtifacts(EventResource):
             "artifacts": event_short_list_schema.dump(a.artifacts)
         })
 
+    @login_required
     def post(self, event_id):
         body = request.get_json(force=True)
         a = Events.find_by_id(event_id)
@@ -60,6 +58,7 @@ class EventArtifacts(EventResource):
             "message": "All books are rigistreted"
         })
 
+    @login_required
     def delete(self, event_id):
         body = request.get_json(force=True)
         a = Events.find_by_id(event_id)

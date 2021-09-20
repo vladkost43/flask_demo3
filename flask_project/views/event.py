@@ -12,7 +12,7 @@ from flask_project.schems.event import event_full_schema, event_short_list_schem
 
 class EventResource(Resource):
     def __init__(self, *args, **kwargs):
-        super(EventResource,self).__init__(*args, **kwargs)
+        super(EventResource, self).__init__(*args, **kwargs)
         self.event = None
 
     def dispatch_request(self, *args, **kwargs):
@@ -36,7 +36,7 @@ class EventResource(Resource):
         @login_required
         @wraps(foo)
         def wrapper(_, event_id):
-            a= Events.find_by_id(event_id)
+            a = Events.find_by_id(event_id)
             if current_user.username != a.creator:
                 return Response("GOOD", status=403)
             return foo(_, event_id)
@@ -48,7 +48,8 @@ class EventResource(Resource):
         @login_required
         @wraps(foo)
         def wrapper(_, event_id):
-            if (current_user.group_id != 2 or current_user.group_id != 3 ) and current_user.username != Events.find_by_id(event_id).creator:
+            if (current_user.group_id != 2 or current_user.group_id != 3) \
+                    and current_user.username != Events.find_by_id(event_id).creator:
                 return Response("GOOD", status=403)
             return foo(_, event_id)
 
@@ -72,7 +73,7 @@ class EventList(Resource):
             user_data['id'] = event.id
             user_data['event_name'] = event.event_name
             user_data['event_date'] = event.event_date
-            user_data['status']= event.status
+            user_data['status'] = event.status
             output.append(user_data)
 
         return jsonify({'events': output})
@@ -104,7 +105,6 @@ class RetrieveUpdateDestroyEvent(EventResource):
     def get(self, event_id):
         return event_full_schema.dump(self.event), 200
 
-
     def patch(self, event_id):
         if current_user.username != Events.find_by_id(event_id).creator or current_user.group_id != 3:
             return {'message': 'No permissions'}, 200
@@ -116,11 +116,9 @@ class RetrieveUpdateDestroyEvent(EventResource):
         a.update_in_db(data=event_json)
         return event_full_schema.dump(self.event), 200
 
-
     def delete(self, event_id):
         if current_user.username != Events.find_by_id(event_id).creator or current_user.group_id != 3:
             return {'message': 'No permissions'}, 200
         a = Events.find_by_id(event_id)
         a.delete_from_db()
         return {'message': 'Event deleted'}, 200
-

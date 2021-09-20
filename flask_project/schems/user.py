@@ -9,9 +9,7 @@ class UserSchema(ModelSchema):
         ordered = True
         include_fk = True
 
-
         fields = ("id", "username", "group_id")
-
 
     @post_load
     def make_event(self, data, **kwargs):

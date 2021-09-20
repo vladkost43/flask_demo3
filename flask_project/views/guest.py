@@ -82,6 +82,7 @@ class UserAsGuest(Resource):
 
 
 class EventGuests(Resource):
+
     def get(self, event_id):
         a = Events.find_by_id(event_id)
         return jsonify({
