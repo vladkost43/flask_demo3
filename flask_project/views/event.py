@@ -105,6 +105,7 @@ class RetrieveUpdateDestroyEvent(EventResource):
     def get(self, event_id):
         return event_full_schema.dump(self.event), 200
 
+    @login_required
     def patch(self, event_id):
         if current_user.username != Events.find_by_id(event_id).creator or current_user.group_id != 3:
             return {'message': 'No permissions'}, 200
@@ -116,6 +117,7 @@ class RetrieveUpdateDestroyEvent(EventResource):
         a.update_in_db(data=event_json)
         return event_full_schema.dump(self.event), 200
 
+    @login_required
     def delete(self, event_id):
         if current_user.username != Events.find_by_id(event_id).creator or current_user.group_id != 3:
             return {'message': 'No permissions'}, 200

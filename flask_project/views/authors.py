@@ -21,6 +21,8 @@ class EventArtifacts(EventResource):
 
     @login_required
     def post(self, event_id):
+        if current_user.username != Events.find_by_id(event_id).creator or current_user.group_id != 3:
+            return {'message': 'No permissions'}, 200
         body = request.get_json(force=True)
         a = Events.find_by_id(event_id)
 
@@ -60,6 +62,8 @@ class EventArtifacts(EventResource):
 
     @login_required
     def delete(self, event_id):
+        if current_user.username != Events.find_by_id(event_id).creator or current_user.group_id != 3:
+            return {'message': 'No permissions'}, 200
         body = request.get_json(force=True)
         a = Events.find_by_id(event_id)
 
