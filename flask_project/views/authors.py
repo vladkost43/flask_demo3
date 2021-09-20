@@ -29,64 +29,73 @@ class EventArtifacts(EventResource):
         if not body.get('books'):
             return jsonify({
                 "status": 404,
-                "message": "Empty or unprovided authors list"
+                "message": "Empty or unprovided books list"
             })
 
         for username_id in body.get('books'):
             if User.exists_remote(username_id):
-                    response = "{}/api/books/{}".format('http://localhost:8000', username_id)
-                    book = Artifact.find_by_url(url=response)
-                    if book is None:
-                        book = Artifact(url=response)
-                        book.save_to_db()
-                    a.artifacts.append(book)
-            else:
-                return jsonify({
-                    "status": 404,
-                    "message": "Empty or unprovided authors list"
-                })
+                response = "{}/api/books/{}/".format("http://localhost:8000", username_id)
+                book = Artifact.find_by_url(url=response)
+                if book is None:
+                    book = Artifact(url=response)
+                    book.save_to_db()
+                a.artifacts.append(book)
+                response = requests.get("{}/api/books/{}/".
+                                        format("http://localhost:8000", username_id))
+                json_data = json.loads(response.text)
+                if json_data["authors"]:
+                    for authors in json_data["authors"]:
+                        auth = authors[0]
+                        url = "{}/api/authors/{}/".format("http://localhost:8000", auth)
+                        author = Authors.find_by_url(url)
 
-
-
+                        # If it is new artifact
+                        if author is None:
+                            author = Authors(url=url)
+                            author.save_to_db()
+                        a.authors.append(author)
         a.save_to_db()
         return jsonify({
             "status": 200,
-            "message": "Author -"
+            "message": "All books are rigistreted"
         })
 
-    @EventResource.admin_or_owner_required
-    def delete(self, event_id: int) -> Response:
-        """Method for deleting participant
-        Parameters
-        ----------
-        event_id : int
-            Event id
-        Returns
-        -------
-        Response
-            Response message with status code
-        """
+    def delete(self, event_id):
         body = request.get_json(force=True)
+        a = Events.find_by_id(event_id)
 
-        if not body.get('participants'):
+        if not body.get('books'):
             return jsonify({
                 "status": 404,
-                "message": "Empty or unprovided participants list"
+                "message": "Empty or unprovided books list"
             })
 
-        for username in body.get('participants'):
-            participant = User.find_by_username(username)
+        for book in body.get('books'):
+            url = "{}/api/books/{}/".format("http://localhost:8000", book)
+            artifact = Artifact.find_by_url(url)
 
-            if (participant is None) or (participant not in self.event.participants):
+            if artifact is None:
                 return jsonify({
                     "status": 404,
-                    "message": "User <{}> not in participants list".format(username)
+                    "message": "Book not in participants list"
                 })
+            a.artifacts.remove(artifact)
+            response = requests.get("{}/api/books/{}/".format("http://localhost:8000", book))
+            json_data = json.loads(response.text)
+            if json_data["authors"]:
+                for authors in json_data["authors"]:
+                    auth = authors[0]
+                    url = "{}/api/authors/{}/".format("http://localhost:8000", auth)
+                    author = Authors.find_by_url(url)
 
-            self.event.participants.remove(participant)
-            self.event.save_to_db()
+                    if author is None:
+                        continue
+                    else:
+                        if author in a.authors:
+                            a.authors.remove(author)
+            a.save_to_db()
 
         return jsonify({
             "status": 200,
-            "message": "All users were successfully unregistered from event participants"
+            "message": "All books were successfully unregistered from event participants"
         })

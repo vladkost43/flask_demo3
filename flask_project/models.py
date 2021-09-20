@@ -14,16 +14,8 @@ class EventArtifactModel(db.Model):
 
     __tablename__ = 'event_artifact'
 
-    event_id = db.Column(db.Integer,
-                         db.ForeignKey("events.id", ondelete="CASCADE"),
-                         primary_key=True)
-    artifact_id = db.Column(db.Integer,
-                            db.ForeignKey("artifact.id", ondelete="CASCADE"),
-                            primary_key=True)
-    event = db.relationship("Events", back_populates="artifacts")
-    artifact = db.relationship("Artifact", back_populates="events")
     event_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('artifacts.id'), nullable=False, primary_key=True)
+    artifact_id = db.Column(db.Integer, db.ForeignKey('artifact.id'), nullable=False, primary_key=True)
 
     @classmethod
     def find_all(cls):
@@ -67,12 +59,20 @@ class Events(UserMixin, db.Model):
     user_id = db.relationship('User',
                               secondary="party",
                               cascade='all, delete')
-    artifacts = db.relationship("EventArtifactModel", back_populates='event', cascade='all, delete')
+    artifacts = db.relationship('Artifact',
+                               secondary="event_artifact",
+                               cascade='all, delete')
     creator = db.Column(db.String(50), unique=False)
     authors = db.relationship('Authors',
                                secondary="event_authors",
                                cascade='all, delete'
                                )
+
+    @classmethod
+    def filter_by_artifacts(cls, art_id, queryset= None):
+        queryset = queryset or cls.query
+        return queryset.join(EventArtifactModel). \
+            filter(EventArtifactModel.artifact_id == int(art_id))
 
     def add_guest(self, user):
         if user in self.event_id:
@@ -267,7 +267,9 @@ class Artifact(db.Model, BaseModel):
 
     id = db.Column(db.Integer, primary_key=True)
     url = db.Column(db.String(128), nullable=False, unique=True)
-    events = db.relationship("EventArtifactModel", back_populates='artifact', cascade='all, delete')
+    db.relationship('Events',
+                    secondary="event_artifact",
+                    cascade='all, delete')
 
     def __str__(self):
         return self.url
