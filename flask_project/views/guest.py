@@ -39,7 +39,7 @@ class UserAsGuest(Resource):
         else:
             return jsonify({
                 "status": 200,
-                "message": "You are nor registred as a Guest"})
+                "message": "You are not registred as a Guest"})
 
     @login_required
     def post(self, event_id):
@@ -83,6 +83,7 @@ class UserAsGuest(Resource):
 
 class EventGuests(Resource):
 
+    @login_required
     def get(self, event_id):
         a = Events.find_by_id(event_id)
         return jsonify({
@@ -90,10 +91,13 @@ class EventGuests(Resource):
                 "guests": user_short_list_schema.dump(a.user_id)
             })
 
+    @login_required
     def post(self, event_id):
 
         body = request.get_json(force=True)
-        if current_user.username != Events.find_by_id(event_id).creator or current_user.group_id == 1:
+        if current_user.group_id == 2 and current_user.username != Events.find_by_id(event_id).creator:
+            return {'message': 'No permissions'}, 200
+        elif current_user.group_id == 1:
             return {'message': 'No permissions'}, 200
 
         if not body.get("guests"):
@@ -125,8 +129,11 @@ class EventGuests(Resource):
             "message": "User were successfully registered for event guests"
         })
 
+    @login_required
     def delete(self, event_id):
-        if current_user.username != Events.find_by_id(event_id).creator or current_user.group_id == 1:
+        if current_user.group_id == 2 and current_user.username != Events.find_by_id(event_id).creator:
+            return {'message': 'No permissions'}, 200
+        elif current_user.group_id == 1:
             return {'message': 'No permissions'}, 200
         body = request.get_json(force=True)
 

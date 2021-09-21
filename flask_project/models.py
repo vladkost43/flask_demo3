@@ -12,8 +12,8 @@ class EventArtifactModel(db.Model):
 
     __tablename__ = 'event_artifact'
 
-    event_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False, primary_key=True)
-    artifact_id = db.Column(db.Integer, db.ForeignKey('artifact.id'), nullable=False, primary_key=True)
+    event_id = db.Column(db.Integer, db.ForeignKey('events.id', ondelete="CASCADE"), primary_key=True)
+    artifact_id = db.Column(db.Integer, db.ForeignKey('artifact.id', ondelete="CASCADE"), primary_key=True)
 
     @classmethod
     def find_all(cls):
@@ -31,8 +31,8 @@ class EventArtifactModel(db.Model):
 class EventWithUsers(db.Model):
     __tablename__ = 'party'
 
-    event_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, primary_key=True)
+    event_id = db.Column(db.Integer, db.ForeignKey('events.id', ondelete="CASCADE"), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete="CASCADE"), primary_key=True)
 
     @classmethod
     def find_all(cls):
@@ -124,27 +124,23 @@ class Events(UserMixin, db.Model):
         db.session.delete(self)
         db.session.commit()
 
-    def update_in_db(self, data):
-        Events.query.filter_by(id=self.id).update(data)
-        db.session.commit()
-
     @classmethod
     def filter_by_guest(cls, user_id, queryset=None):
         queryset = queryset or cls.query
         return queryset.join(EventWithUsers). \
             filter(EventWithUsers.user_id == int(user_id))
 
-    def add_guest(self, user):
-        if user in self.user_id:
-            raise exc.IntegrityError("User can not be guest and participant", params=None, orig=None)
-        self.user_id.append(user)
-        self.save_to_db()
-
     @classmethod
     def filter_by_participant(cls, user_id, queryset=None):
         queryset = queryset or cls.query
         return queryset.join(EventAuthorsModel). \
             filter(EventAuthorsModel.authors_id == int(user_id))
+
+    @classmethod
+    def filter_by_creator(cls, user_id, queryset=None):
+        queryset = queryset or cls.query
+        user = User.query.filter_by(id=user_id).first()
+        return queryset.filter_by(creator=user.username)
 
 
 class User(UserMixin, db.Model):
@@ -196,10 +192,6 @@ class User(UserMixin, db.Model):
     @classmethod
     def exists_local(cls, username):
         return bool(User.query.filter_by(username=username).first())
-
-    @classmethod
-    def exists(cls, username):
-        return User.exists_local(username)
 
     @classmethod
     def get_or_create(cls, username):
@@ -296,8 +288,8 @@ class EventAuthorsModel(db.Model):
 
     __tablename__ = 'event_authors'
 
-    event_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False, primary_key=True)
-    authors_id = db.Column(db.Integer, db.ForeignKey('authors.id'), nullable=False, primary_key=True)
+    event_id = db.Column(db.Integer, db.ForeignKey('events.id', ondelete="CASCADE"), primary_key=True)
+    authors_id = db.Column(db.Integer, db.ForeignKey('authors.id', ondelete="CASCADE"), primary_key=True)
 
     @classmethod
     def find_all(cls):

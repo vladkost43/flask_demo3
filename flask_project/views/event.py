@@ -1,3 +1,4 @@
+import re
 from functools import wraps
 
 from flask import Response
@@ -56,11 +57,27 @@ class EventResource(Resource):
         return wrapper
 
 
-class UserEventsAsOwner(Resource):
+class UserEventsAsCreator(Resource):
     @staticmethod
     @login_required
     def get():
-        return event_short_list_schema.dump(Events.filter_by_owner(user_id=current_user.id))
+        if current_user.group_id != 2:
+            return {'message': 'You are not a creator'}, 400
+        return event_short_list_schema.dump(Events.filter_by_creator(user_id=current_user.id))
+
+
+class RegisterOpen(Resource):
+    @staticmethod
+    @login_required
+    def get():
+        return event_short_list_schema.dump(Events.query.filter_by(status="register open"))
+
+
+class RegisterClosed(Resource):
+    @staticmethod
+    @login_required
+    def get():
+        return event_short_list_schema.dump(Events.query.filter_by(status="register closed"))
 
 
 class EventList(Resource):
@@ -96,18 +113,25 @@ class EventList(Resource):
         if event.status == "register closed":
             db.session.rollback()
             return {'message': 'You can not create past event'}, 400
+        if not re.match('^[a-z0-9_-]{4,40}$', event_name):
+            return jsonify({
+                "status": 400,
+                "massage": "Incorrect event_name"
+            })
 
         event.save_to_db()
         return event_full_schema.dump(event), 200
 
 
-class RetrieveUpdateDestroyEvent(EventResource):
+class ChangeInformarionEvent(EventResource):
     def get(self, event_id):
         return event_full_schema.dump(self.event), 200
 
     @login_required
     def patch(self, event_id):
-        if current_user.username != Events.find_by_id(event_id).creator or current_user.group_id != 3:
+        if current_user.group_id == 2 and current_user.username != Events.find_by_id(event_id).creator:
+            return {'message': 'No permissions'}, 200
+        elif current_user.group_id == 1:
             return {'message': 'No permissions'}, 200
         event_json = request.get_json(force=True)
         a = Events.find_by_id(event_id)
@@ -119,7 +143,9 @@ class RetrieveUpdateDestroyEvent(EventResource):
 
     @login_required
     def delete(self, event_id):
-        if current_user.username != Events.find_by_id(event_id).creator or current_user.group_id != 3:
+        if current_user.group_id == 2 and current_user.username != Events.find_by_id(event_id).creator:
+            return {'message': 'No permissions'}, 200
+        elif current_user.group_id == 1:
             return {'message': 'No permissions'}, 200
         a = Events.find_by_id(event_id)
         a.delete_from_db()

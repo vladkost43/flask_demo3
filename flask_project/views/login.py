@@ -1,4 +1,6 @@
 import os
+import re
+
 import jwt
 from flask import request, jsonify, Response
 from flask_login import (
@@ -72,7 +74,7 @@ class Login(Resource):
             })
 
 
-class SignUp(Resource):
+class Register(Resource):
     @classmethod
     def post(cls):
         user_json = request.get_json(force=True)
@@ -87,10 +89,10 @@ class SignUp(Resource):
 
         elif User.exists_local(username):
             return {"status": 401, "message": "User already exists"}
-        elif len(username) < 1 or len(password) < 6:
+        elif not re.Match('^[a-z0-9_-]{4,20}$', username):
             return jsonify({
                 "status": 400,
-                "massage": "Username must have > 1 symvols or password > 6 symvols"
+                "massage": "Incorrect username"
             })
 
         else:

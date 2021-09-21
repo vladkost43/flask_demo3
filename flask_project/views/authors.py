@@ -1,7 +1,6 @@
 import requests
-from flask import request, Response, jsonify
+from flask import request, jsonify
 from flask_login import login_required, current_user
-from flask_restful import Resource
 import json
 
 from flask_project.models import Events, Artifact, Authors
