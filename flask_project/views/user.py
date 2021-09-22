@@ -12,12 +12,19 @@ from flask_project.views.checker import admin_required
 
 
 class UserResource(Resource):
+    """
+    Base resource class for User model
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = None
 
     @login_required
     def dispatch_request(self, *args, **kwargs):
+        """
+        Checks if the user exists,
+        and if so, then initializes it
+        """
         username = kwargs.get("username")
         user = User.find_by_username(username)
 
@@ -42,6 +49,9 @@ class UserResource(Resource):
 
 
 class SignupApi(Resource):
+    """
+    Resource for retrieving exists and adding new users
+    """
     @classmethod
     def get(self):
         if current_user.is_authenticated and current_user.group_id == 3:
@@ -85,9 +95,15 @@ class SignupApi(Resource):
 
 
 class UserApi(Resource):
+    """
+    Resource for managing User details
+    """
     @classmethod
     @login_required
     def get(self, user_id):
+        """
+        Method for retrieving details about the User
+        """
         if current_user.is_authenticated and (current_user.group_id == 3 or current_user.id == user_id):
             user = User.query.filter_by(id=user_id).first()
             if not user:
@@ -103,6 +119,9 @@ class UserApi(Resource):
     @classmethod
     @login_required
     def delete(cls, user_id):
+        """
+        Method for deleting the User
+        """
         if current_user.is_authenticated and current_user.group_id == 3:
             user_data = User.query.get(user_id)
             if user_data:
@@ -116,6 +135,9 @@ class UserApi(Resource):
     @classmethod
     @login_required
     def put(cls, user_id):
+        """
+        Method for partial updating details about the User
+        """
         if current_user.is_authenticated and (current_user.group_id == 3 or current_user.id == user_id):
             user_data = User.query.get(user_id)
             user_json = request.get_json(force=True)
@@ -134,7 +156,7 @@ class UserApi(Resource):
                     user_data.group_id = user_json['group_id']
             except AssertionError:
                 return {"status": 401, "message": "Invalid data"}
-            if current_user.group_id == 3 and user_data.group_id < 1 and user_data.group_id > 2:
+            if user_data.group_id < 1 and user_data.group_id > 2:
                 return {"status": 401, "message": "Invalid group id"}
             user_data.save_to_db()
             return user_full_schema.dump(user_data), 200

@@ -14,12 +14,18 @@ class UserEventsAsGuest(Resource):
     @staticmethod
     @login_required
     def get():
+        """
+        Method for get events list where user register by guest
+        """
         return event_short_list_schema.dump(Events.filter_by_guest(user_id=current_user.id))
 
 
 class UserAsGuest(Resource):
     @login_required
     def get(self, event_id):
+        """
+        Method for checking registration as a guest
+        """
         a = Events.find_by_id(event_id)
         if current_user in a.user_id:
             return jsonify({
@@ -43,6 +49,9 @@ class UserAsGuest(Resource):
 
     @login_required
     def post(self, event_id):
+        """
+        Method for registering as a guest
+        """
         if current_user.group_id != 1:
             return jsonify({
                 "status": 404,
@@ -65,6 +74,11 @@ class UserAsGuest(Resource):
 
     @login_required
     def delete(self, event_id):
+        """
+        Method for delete registering as a guest
+        """
+        if current_user.group_id != 1:
+            return {'message': 'No permissions'}, 200
         a = Events.find_by_id(event_id)
         if current_user not in a.user_id:
             return jsonify({
@@ -85,6 +99,9 @@ class EventGuests(Resource):
 
     @login_required
     def get(self, event_id):
+        """
+        Method for retrieving a list of event guests
+        """
         a = Events.find_by_id(event_id)
         return jsonify({
                 "status": 200,
@@ -93,7 +110,9 @@ class EventGuests(Resource):
 
     @login_required
     def post(self, event_id):
-
+        """
+        Method for adding new guest
+        """
         body = request.get_json(force=True)
         if current_user.group_id == 2 and current_user.username != Events.find_by_id(event_id).creator:
             return {'message': 'No permissions'}, 200
@@ -131,7 +150,11 @@ class EventGuests(Resource):
 
     @login_required
     def delete(self, event_id):
-        if current_user.group_id == 2 and current_user.username != Events.find_by_id(event_id).creator:
+        """
+        Method for delete new guest
+        """
+        if (current_user.group_id == 2 and current_user.username != Events.find_by_id(event_id).creator) or \
+                (current_user.group_id == 3 and current_user.username == Events.find_by_id(event_id).creator):
             return {'message': 'No permissions'}, 200
         elif current_user.group_id == 1:
             return {'message': 'No permissions'}, 200

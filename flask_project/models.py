@@ -9,6 +9,9 @@ from flask_login import UserMixin
 
 
 class EventArtifactModel(db.Model):
+    """
+    Many-to-Many relationship model between Event and Artifact
+    """
 
     __tablename__ = 'event_artifact'
 
@@ -29,6 +32,9 @@ class EventArtifactModel(db.Model):
 
 
 class EventWithUsers(db.Model):
+    """
+     Many-to-Many relationship model between Event and User
+     """
     __tablename__ = 'party'
 
     event_id = db.Column(db.Integer, db.ForeignKey('events.id', ondelete="CASCADE"), primary_key=True)
@@ -48,6 +54,9 @@ class EventWithUsers(db.Model):
 
 
 class Events(UserMixin, db.Model):
+    """
+    Events model
+    """
     __tablename__ = 'events'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -68,11 +77,17 @@ class Events(UserMixin, db.Model):
 
     @classmethod
     def filter_by_artifacts(cls, art_id, queryset=None):
+        """
+        Method for searching by event artifacts
+        """
         queryset = queryset or cls.query
         return queryset.join(EventArtifactModel). \
             filter(EventArtifactModel.artifact_id == int(art_id))
 
     def add_guest(self, user):
+        """
+        Add given user to the guests list
+        """
         if user in self.event_id:
             raise exc.IntegrityError("User can not be guest and participant", params=None, orig=None)
         self.event_id.append(user)
@@ -83,6 +98,9 @@ class Events(UserMixin, db.Model):
 
     @classmethod
     def find_by_id(cls, user_id):
+        """
+        Method for searching by event id
+        """
         return cls.query.filter_by(id=user_id).first()
 
     def update_in_db(self, data):
@@ -91,19 +109,24 @@ class Events(UserMixin, db.Model):
 
     @classmethod
     def find_by_title(cls, event_name):
+        """
+        Method for searching by event name
+        """
         return cls.query.filter_by(event_name=event_name).first()
 
     @classmethod
     def find_by_status(cls, status, queryset=None):
+        """
+        Method for searching by event status
+        """
         queryset = queryset or cls.query
         return queryset.filter_by(status=status)
 
-    @classmethod
-    def filter_by_owner(cls, user_id):
-        return cls.query.filter_by(owner_id=user_id)
-
     @hybrid_property
     def status(self):
+        """
+        Method for post status< after checking event_date
+        """
         self.event_date = datetime.strptime(str(self.event_date), "%Y-%m-%d %H:%M:%S")
         if self.event_date > datetime.now():
             return "register open"
@@ -126,24 +149,36 @@ class Events(UserMixin, db.Model):
 
     @classmethod
     def filter_by_guest(cls, user_id, queryset=None):
+        """
+        Method for searching by event guests
+        """
         queryset = queryset or cls.query
         return queryset.join(EventWithUsers). \
             filter(EventWithUsers.user_id == int(user_id))
 
     @classmethod
     def filter_by_participant(cls, user_id, queryset=None):
+        """
+        Method for searching by event authors
+        """
         queryset = queryset or cls.query
         return queryset.join(EventAuthorsModel). \
             filter(EventAuthorsModel.authors_id == int(user_id))
 
     @classmethod
     def filter_by_creator(cls, user_id, queryset=None):
+        """
+        Method for searching by event creator
+        """
         queryset = queryset or cls.query
         user = User.query.filter_by(id=user_id).first()
         return queryset.filter_by(creator=user.username)
 
 
 class User(UserMixin, db.Model):
+    """
+    User model
+    """
     __tablename__ = 'user'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -171,18 +206,27 @@ class User(UserMixin, db.Model):
 
     @password.setter
     def password(self, password):
+        """
+        Method for hask password
+        """
         if password is None:
             self._password = None
         else:
             self._password = generate_password_hash(password)
 
     def check_password(self, password):
+        """
+        Method for check password
+        """
         if not self._password or not password:
             return False
         return check_password_hash(self._password, password)
 
     @classmethod
     def find_by_username(cls, username):
+        """
+        Method for searching by user username
+        """
         return User.query.filter_by(username=username).first()
 
     @classmethod
@@ -191,10 +235,16 @@ class User(UserMixin, db.Model):
 
     @classmethod
     def exists_local(cls, username):
+        """
+        Method for checking, exist user  in Users be username
+        """
         return bool(User.query.filter_by(username=username).first())
 
     @classmethod
     def get_or_create(cls, username):
+        """
+        Method for get or create user
+        """
         user = User.find_by_username(username)
         if user is None:
             user = User(username=username)
@@ -211,11 +261,17 @@ class User(UserMixin, db.Model):
 
     @classmethod
     def exists_remote(cls, books_id):
+        """
+        Method for checking, eexists Book in other host
+        """
         return bool(requests.get('{}/api/books/{}'.format('http://localhost:8000', books_id)))
 
 
 class Group(db.Model):
-
+    """
+    Group model
+    Many-to-one relationship model between User and Group
+    """
     __tablename__ = 'group'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -251,6 +307,9 @@ class BaseModel:
 
 
 class Artifact(db.Model, BaseModel):
+    """
+    Artifact model
+    """
     __tablename__ = 'artifact'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -268,6 +327,9 @@ class Artifact(db.Model, BaseModel):
 
 
 class Authors(db.Model, BaseModel):
+    """
+    Authors model
+    """
     __tablename__ = 'authors'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -285,6 +347,9 @@ class Authors(db.Model, BaseModel):
 
 
 class EventAuthorsModel(db.Model):
+    """
+    Many-to-Many relationship model between Event and Authors
+    """
 
     __tablename__ = 'event_authors'
 

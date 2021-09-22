@@ -8,6 +8,9 @@ from flask_project.schems.user import user_short_list_schema
 
 
 class EventSchema(ModelSchema):
+    """
+    Events Schema
+    """
     event_name = fields.String(
         required=True,
         error_messages={
@@ -29,6 +32,9 @@ class EventSchema(ModelSchema):
     creator = fields.String()
 
     class Meta:
+        """
+        Connecting Schema to the Event Model
+        """
         ordered = True
         include_fk = True
         model = Events
@@ -37,6 +43,9 @@ class EventSchema(ModelSchema):
 
     @post_load
     def make_event(self, data, **kwargs):
+        """
+        Returning Event Model
+        """
         return Events(**data)
 
 

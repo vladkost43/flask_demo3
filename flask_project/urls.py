@@ -5,7 +5,7 @@ from flask_project.views.login import Login,\
 from flask_project.views.user import SignupApi,\
     UserApi
 from flask_project.views.event import EventList,\
-    ChangeInformarionEvent,\
+    ChangeInformationEvent,\
     UserEventsAsCreator,\
     RegisterOpen,\
     RegisterClosed
@@ -20,7 +20,7 @@ api.add_resource(Login, "/login")
 api.add_resource(Register, "/register")
 api.add_resource(Logout, "/logout")
 api.add_resource(EventList, "/event")
-api.add_resource(ChangeInformarionEvent, "/event/<int:event_id>")
+api.add_resource(ChangeInformationEvent, "/event/<int:event_id>")
 api.add_resource(UserEventsAsGuest, "/me_in_group")
 api.add_resource(UserAsGuest, "/event/<int:event_id>/me_guest")
 api.add_resource(EventGuests, "/event/<int:event_id>/guests")

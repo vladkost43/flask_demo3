@@ -3,9 +3,16 @@ from marshmallow_sqlalchemy import ModelSchema
 
 from flask_project.models import Artifact
 
+"""
+Artifact Schema
+"""
+
 
 class ArtifactSchema(ModelSchema):
     class Meta:
+        """
+        Connecting Schema with the Artifact Model
+        """
         ordered = True
         model = Artifact
         fields = ("id", "url",)
@@ -13,6 +20,9 @@ class ArtifactSchema(ModelSchema):
 
     @post_load
     def make_artifact(self, data, **kwargs):
+        """
+        Returning Artifact Model
+        """
         return Artifact(**data)
 
 

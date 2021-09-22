@@ -2,9 +2,16 @@ from marshmallow_sqlalchemy import ModelSchema
 from flask_project.models import User
 from marshmallow import post_load
 
+"""
+User Schema
+"""
+
 
 class UserSchema(ModelSchema):
     class Meta:
+        """
+        Connecting Schema to the User Model
+        """
         model = User
         ordered = True
         include_fk = True
@@ -13,6 +20,9 @@ class UserSchema(ModelSchema):
 
     @post_load
     def make_event(self, data, **kwargs):
+        """
+        Returning User Model
+        """
         return User(**data)
 
 

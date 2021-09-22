@@ -10,6 +10,9 @@ from flask_project.schems.event import event_short_list_schema
 
 
 class EventArtifacts(EventResource):
+    """
+    Method for retrieving a list of artifacts of event
+    """
 
     def get(self, event_id):
         a = Events.find_by_id(event_id)
@@ -20,7 +23,12 @@ class EventArtifacts(EventResource):
 
     @login_required
     def post(self, event_id):
-        if current_user.username != Events.find_by_id(event_id).creator or current_user.group_id != 3:
+        """
+        Method for add list of artifacts of event
+        """
+        if current_user.group_id == 2 and current_user.username != Events.find_by_id(event_id).creator:
+            return {'message': 'No permissions'}, 200
+        elif current_user.group_id == 1:
             return {'message': 'No permissions'}, 200
         body = request.get_json(force=True)
         a = Events.find_by_id(event_id)
@@ -61,7 +69,12 @@ class EventArtifacts(EventResource):
 
     @login_required
     def delete(self, event_id):
-        if current_user.username != Events.find_by_id(event_id).creator or current_user.group_id != 3:
+        """
+        Method for delete list of artifacts of event
+        """
+        if current_user.group_id == 2 and current_user.username != Events.find_by_id(event_id).creator:
+            return {'message': 'No permissions'}, 200
+        elif current_user.group_id == 1:
             return {'message': 'No permissions'}, 200
         body = request.get_json(force=True)
         a = Events.find_by_id(event_id)
@@ -94,10 +107,30 @@ class EventArtifacts(EventResource):
                         continue
                     else:
                         if author in a.authors:
-                            a.authors.remove(author)
+                            if check_author(event_id, auth):
+                                a.authors.remove(author)
+
             a.save_to_db()
 
         return jsonify({
             "status": 200,
             "message": "All books were successfully unregistered from event participants"
         })
+
+
+def check_author(event_id, auth):
+    """
+    Method for check if author consist in 2 jr mane books
+    """
+    a = Events.find_by_id(event_id)
+    sum_author = 0
+    for artifact in a.artifacts:
+        response = requests.get("{}".format(artifact.url))
+        json_data = json.loads(response.text)
+        for authors in json_data["authors"]:
+            auth1 = authors[0]
+            if auth == auth1:
+                sum_author += 1
+    if sum_author == 1:
+        return False
+    return True
