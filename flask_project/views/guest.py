@@ -64,6 +64,11 @@ class UserAsGuest(Resource):
                     "status": 404,
                     "message": "You can be a guest"
                 })
+            if a.status == "register closed":
+                return jsonify({
+                    "status": 404,
+                    "message": "Register closed"
+                })
 
             a.add_guest(current_user)
             a.save_to_db()
@@ -140,6 +145,11 @@ class EventGuests(Resource):
                         "status": 400,
                         "message": "<{}> already registered for event as guest".format(guest.username)
                     })
+            if a.status == "register closed":
+                return jsonify({
+                    "status": 404,
+                    "message": "Register closed"
+                })
 
             a.add_guest(guest)
 
@@ -179,5 +189,5 @@ class EventGuests(Resource):
 
         return jsonify({
             "status": 200,
-            "message": "All users were successfully unregistered from event guests"
+            "message": "User were successfully unregistered from event guests"
         })

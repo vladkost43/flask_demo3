@@ -89,18 +89,18 @@ class Register(Resource):
 
         elif User.exists_local(username):
             return {"status": 401, "message": "User already exists"}
-        elif not re.Match('^[a-z0-9_-]{4,20}$', username):
+        elif not re.match('^[a-z0-9_-]{4,20}$', username):
             return jsonify({
                 "status": 400,
                 "massage": "Incorrect username"
             })
 
         else:
+            if group_id < 1 or group_id > 2:
+                return {"status": 401, "message": "Invalid group id"}
             user = User(username=username,
                         group_id=group_id,
                         password=password)
-            if user.group_id < 1 and user.group_id > 2:
-                return {"status": 401, "message": "Invalid group id"}
             user.save_to_db()
             return user_full_schema.dump(user), 200
 

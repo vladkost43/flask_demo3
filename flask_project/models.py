@@ -88,9 +88,9 @@ class Events(UserMixin, db.Model):
         """
         Add given user to the guests list
         """
-        if user in self.event_id:
+        if user in self.user_id:
             raise exc.IntegrityError("User can not be guest and participant", params=None, orig=None)
-        self.event_id.append(user)
+        self.user_id.append(user)
         self.save_to_db()
 
     def __repr__(self):

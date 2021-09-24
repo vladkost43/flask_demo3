@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 from functools import wraps
 
 from flask import Response
@@ -137,14 +138,15 @@ class ChangeInformationEvent(EventResource):
         Method for partial updating details about the Event
         """
         if current_user.group_id == 2 and current_user.username != Events.find_by_id(event_id).creator:
-            return {'message': 'No permissions'}, 200
+            return {'message': 'No permissions'}, 400
         elif current_user.group_id == 1:
-            return {'message': 'No permissions'}, 200
+            return {'message': 'No permissions'}, 400
         event_json = request.get_json(force=True)
         a = Events.find_by_id(event_id)
         if Events.find_by_title(event_json.get('event_name')):
             return {'message': 'Event already exists'}, 400
-
+        if event_json.get('status') or event_json.get('creator'):
+            return {'message': 'You cant change creator or status'}, 400
         a.update_in_db(data=event_json)
         return event_full_schema.dump(self.event), 200
 
@@ -155,12 +157,11 @@ class ChangeInformationEvent(EventResource):
         """
         if current_user.group_id == 2 and current_user.username != Events.find_by_id(event_id).creator or \
                 (current_user.group_id == 3 and current_user.username == Events.find_by_id(event_id).creator):
-            return {'message': 'No permissions'}, 200
+            return {'message': 'No permissions'}, 400
         elif current_user.group_id == 1:
-            return {'message': 'No permissions'}, 200
+            return {'message': 'No permissions'}, 400
         a = Events.find_by_id(event_id)
         for author in a.authors:
             a.authors.remove(author)
-        a.save_to_db()
         a.delete_from_db()
         return {'message': 'Event deleted'}, 200

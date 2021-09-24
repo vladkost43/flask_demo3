@@ -110,7 +110,6 @@ class UserApi(Resource):
                 return jsonify({'message': 'No User'})
             user_data = {}
             user_data['username'] = user.username
-            user_data['password'] = user.password
             a = Group.query.get(user.group_id)
             user_data['group'] = a.group
             return jsonify({'user': user_data})
@@ -122,13 +121,13 @@ class UserApi(Resource):
         """
         Method for deleting the User
         """
-        if current_user.is_authenticated and current_user.group_id == 3:
+        if current_user.is_authenticated and (current_user.group_id == 3 or current_user.id == user_id):
             user_data = User.query.get(user_id)
             if user_data:
                 user_data.delete_from_db()
                 return {"status": 200, 'message': "User Deleted successfully"}
 
-            return {"status": 404, 'message': "User mnot founf"}
+            return {"status": 404, 'message': "User not found"}
 
         return {"status": 401, "reason": "User is not admin"}
 
@@ -142,11 +141,12 @@ class UserApi(Resource):
             user_data = User.query.get(user_id)
             user_json = request.get_json(force=True)
             username = user_json['username']
+            user_check = User.query.filter_by(id=user_id).first()
 
             if not user_data:
                 return {"status": 404, 'message': "User not found"}
 
-            if User.exists(username=username) and current_user.username != username:
+            if User.exists(username=username) and user_check.username != username:
                 return {"status": 401, "reason": "User already exist"}
 
             try:
@@ -156,7 +156,7 @@ class UserApi(Resource):
                     user_data.group_id = user_json['group_id']
             except AssertionError:
                 return {"status": 401, "message": "Invalid data"}
-            if user_data.group_id < 1 and user_data.group_id > 2:
+            if (user_data.group_id < 1 or user_data.group_id > 3) and current_user.group_id == 3:
                 return {"status": 401, "message": "Invalid group id"}
             user_data.save_to_db()
             return user_full_schema.dump(user_data), 200
